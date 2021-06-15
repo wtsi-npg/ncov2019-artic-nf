@@ -11,6 +11,7 @@ include {readMapping} from '../modules/illumina.nf'
 include {trimPrimerSequences} from '../modules/illumina.nf' 
 include {callVariants} from '../modules/illumina.nf'
 include {makeConsensus} from '../modules/illumina.nf' 
+include {makeConsensusAMD} from '../modules/illumina.nf' 
 include {cramToFastq} from '../modules/illumina.nf'
 
 include {makeQCCSV} from '../modules/qc.nf'
@@ -97,8 +98,10 @@ workflow sequenceAnalysis {
 
       makeConsensus(trimPrimerSequences.out.ptrim)
 
-      makeQCCSV(trimPrimerSequences.out.ptrim.join(makeConsensus.out, by: 0)
-                                   .combine(ch_preparedRef.map{ it[0] }))
+      makeConsensusAMD(trimPrimerSequences.out.ptrim)
+
+      makeQCCSV(trimPrimerSequences.out.ptrim.join(makeConsensus.out, by: 0).join(makeConsensusAMD.out, by: 0)
+                                   .combine(ch_preparedRef.map{ it[0] })) 
 
       makeQCCSV.out.csv.splitCsv()
                        .unique()

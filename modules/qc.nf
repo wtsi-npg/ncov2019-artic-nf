@@ -4,7 +4,7 @@ process makeQCCSV {
     publishDir "${params.outdir}/qc_plots", pattern: "${sampleName}.depth.png", mode: 'copy'
 
     input:
-    tuple sampleName, path(bam), path(fasta), path(ref)
+    tuple sampleName, path(bam), path(fasta), path(fasta_amd), path(ref)
 
     output:
     path "${params.prefix}.${sampleName}.qc.csv", emit: csv
@@ -17,8 +17,9 @@ process makeQCCSV {
        qcSetting = "--nanopore"
     }
 
+
     """
-    qc.py ${qcSetting} --outfile ${params.prefix}.${sampleName}.qc.csv --sample ${sampleName} --ref ${ref} --bam ${bam} --fasta ${fasta}
+    qc.py ${qcSetting} --outfile ${params.prefix}.${sampleName}.qc.csv --sample ${sampleName} --ref ${ref} --bam ${bam} --fasta ${fasta} --fasta_amd ${fasta_amd}  --ivar_md ${params.ivarMinDepth} --ivar_amd ${params.ivarAlternativeMinDepth}
     """
 }
 
