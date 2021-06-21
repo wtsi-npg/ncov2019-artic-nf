@@ -164,7 +164,7 @@ process makeConsensusAMD {
 
     tag { sampleName }
 
-    publishDir "${params.outdir}/${task.process.replaceAll(":","_").replaceFirst(/AMD/,"")}", pattern: "${sampleName}.amd.primertrimmed.consensus.fa", mode: 'copy'
+    publishDir "${params.outdir}/${task.process.replaceAll(":","_")}", pattern: "${sampleName}.amd.primertrimmed.consensus.fa", mode: 'copy'
 
     input:
         tuple(sampleName, path(bam))
