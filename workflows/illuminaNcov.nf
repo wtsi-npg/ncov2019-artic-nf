@@ -11,6 +11,7 @@ include {readMapping} from '../modules/illumina.nf'
 include {trimPrimerSequences} from '../modules/illumina.nf' 
 include {callVariants} from '../modules/illumina.nf'
 include {makeConsensus} from '../modules/illumina.nf' 
+include {makeConsensusAMD} from '../modules/illumina.nf' 
 include {cramToFastq} from '../modules/illumina.nf'
 
 include {makeQCCSV} from '../modules/qc.nf'
@@ -73,6 +74,7 @@ workflow prepareReferenceFiles {
                          .set{ ch_bedFile }
     }
 
+
     emit:
       bwaindex = ch_preparedRef
       bedfile = ch_bedFile
@@ -97,8 +99,14 @@ workflow sequenceAnalysis {
 
       makeConsensus(trimPrimerSequences.out.ptrim)
 
-      makeQCCSV(trimPrimerSequences.out.ptrim.join(makeConsensus.out, by: 0)
-                                   .combine(ch_preparedRef.map{ it[0] }))
+      if (params.ivarAlternativeMinDepth) {
+          makeConsensusAMD(trimPrimerSequences.out.ptrim)
+          makeQCCSV(trimPrimerSequences.out.ptrim.join(makeConsensus.out, by: 0).join(makeConsensusAMD.out, by: 0).combine(ch_preparedRef.map{ it[0] }))
+      }
+      else {
+          makeQCCSV(trimPrimerSequences.out.ptrim.join(makeConsensus.out, by: 0).combine([file('NO_FILE')]).combine(ch_preparedRef.map{ it[0] }))
+      }
+
 
       makeQCCSV.out.csv.splitCsv()
                        .unique()
@@ -106,7 +114,7 @@ workflow sequenceAnalysis {
                            header: it[-1] == 'qc_pass'
                            fail: it[-1] == 'FALSE'
                            pass: it[-1] == 'TRUE'
-    		       }
+                      }
                        .set { qc }
 
       writeQCSummaryCSV(qc.header.concat(qc.pass).concat(qc.fail).toList())
@@ -126,6 +134,7 @@ workflow sequenceAnalysis {
       variants = callVariants.out.variants
 }
 
+
 workflow ncovIllumina {
     take:
       ch_filePairs
@@ -133,7 +142,7 @@ workflow ncovIllumina {
     main:
       // Build or download fasta, index and bedfile as required
       prepareReferenceFiles()
-      
+
       // Actually do analysis
       sequenceAnalysis(ch_filePairs, prepareReferenceFiles.out.bwaindex, prepareReferenceFiles.out.bedfile)
 

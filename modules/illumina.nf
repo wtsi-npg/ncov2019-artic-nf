@@ -160,6 +160,27 @@ process makeConsensus {
         """
 }
 
+process makeConsensusAMD {
+
+    tag { sampleName }
+
+    publishDir "${params.outdir}/${task.process.replaceAll(":","_")}", pattern: "${sampleName}.amd.primertrimmed.consensus.fa", mode: 'copy'
+
+    input:
+        tuple(sampleName, path(bam))
+
+    output:
+        tuple(sampleName, path("${sampleName}.amd.primertrimmed.consensus.fa"))
+
+    script:
+        """
+        samtools mpileup -aa -A -B -d ${params.mpileupDepth} -Q0 ${bam} | \
+        ivar consensus -t ${params.ivarFreqThreshold} -m ${params.ivarAlternativeMinDepth} \
+        -n N -p ${sampleName}.amd.primertrimmed.consensus
+        """
+}
+
+
 process cramToFastq {
     /**
     * Converts CRAM to fastq (http://bio-bwa.sourceforge.net/)
