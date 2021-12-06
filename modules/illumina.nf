@@ -102,8 +102,7 @@ process trimPrimerSequences {
 
         mv sample.mapped.bam ${sampleName}.mapped.bam
        
-        samtools view -o ${sampleName}.filtered.mapped.bam -U ${sampleName}.bad.mapped.bam -e '!flag.munmap && (tlen > 300 || tlen < -300)' -F 20
-48 ${sampleName}.mapped.bam
+        samtools view -o ${sampleName}.filtered.mapped.bam -U ${sampleName}.bad.mapped.bam -e '!flag.munmap && (tlen > 300 || tlen < -300)' -F 2048 ${sampleName}.mapped.bam
  
         samtools index ${sampleName}.filtered.mapped.bam
 
