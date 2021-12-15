@@ -101,10 +101,12 @@ process trimPrimerSequences {
         samtools view -F4 -o sample.mapped.bam
 
         mv sample.mapped.bam ${sampleName}.mapped.bam
-        
-        samtools index ${sampleName}.mapped.bam
+       
+        samtools view -o ${sampleName}.filtered.mapped.bam -U ${sampleName}.bad.mapped.bam -e '!flag.munmap && (tlen > 300 || tlen < -300)' -F 2048 ${sampleName}.mapped.bam
+ 
+        samtools index ${sampleName}.filtered.mapped.bam
 
-        ${ivarCmd} -i ${sampleName}.mapped.bam -b ${bedfile} -m ${params.illuminaKeepLen} -q ${params.illuminaQualThreshold} -p ivar.out
+        ${ivarCmd} -i ${sampleName}.filtered.mapped.bam -b ${bedfile} -m ${params.illuminaKeepLen} -q ${params.illuminaQualThreshold} -p ivar.out
 
         samtools reheader --no-PG  -c 'sed "s/${sampleName}/sample/g"' ivar.out.bam | \
         samtools sort -o sample.mapped.primertrimmed.sorted.bam
@@ -115,8 +117,9 @@ process trimPrimerSequences {
     else
         """
         samtools view -F4 -o ${sampleName}.mapped.bam ${bam}
-        samtools index ${sampleName}.mapped.bam
-        ${ivarCmd} -i ${sampleName}.mapped.bam -b ${bedfile} -m ${params.illuminaKeepLen} -q ${params.illuminaQualThreshold} -p ivar.out
+        samtools view -o ${sampleName}.filtered.mapped.bam -U ${sampleName}.bad.mapped.bam -e '!flag.munmap && (tlen > 300 || tlen < -300)' -F 2048 ${sampleName}.mapped.bam
+        samtools index ${sampleName}.filtered.mapped.bam
+        ${ivarCmd} -i ${sampleName}.filtered.mapped.bam -b ${bedfile} -m ${params.illuminaKeepLen} -q ${params.illuminaQualThreshold} -p ivar.out
         samtools sort -o ${sampleName}.mapped.primertrimmed.sorted.bam ivar.out.bam
         """
 }
