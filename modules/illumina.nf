@@ -89,39 +89,33 @@ process trimPrimerSequences {
     tuple sampleName, path("${sampleName}.mapped.primertrimmed.sorted.bam" ), emit: ptrim
 
     script:
-    if (params.allowNoprimer){
-        ivarCmd = "ivar trim -e"
-    } else {
-        ivarCmd = "ivar trim"
-    }
+      ivarCmd = params.allowNoprimer ? "ivar trim -e" : "ivar trim"
+      
+      samtoolsIvarCmd = params.tlenFilter ?
+                            "samtools view -o ${sampleName}.filtered.mapped.bam -U ${sampleName}.bad.mapped.bam -e '!flag.munmap && (tlen > 300 || tlen < -300)' -F 2048 ${sampleName}.mapped.bam ; samtools index ${sampleName}.filtered.mapped.bam ; ${ivarCmd} -i ${sampleName}.filtered.mapped.bam -b ${bedfile} -m ${params.illuminaKeepLen} -q ${params.illuminaQualThreshold} -p ivar.out"
+                            :
+                            "samtools index ${sampleName}.mapped.bam; ${ivarCmd} -i ${sampleName}.mapped.bam -b ${bedfile} -m ${params.illuminaKeepLen} -q ${params.illuminaQualThreshold} -p ivar.out"
    
     if ( params.cleanBamHeader )
-        """
-        samtools reheader --no-PG  -c 'sed "s/${sampleName}/sample/g"' ${bam} | \
-        samtools view -F4 -o sample.mapped.bam
 
-        mv sample.mapped.bam ${sampleName}.mapped.bam
-       
-        samtools view -o ${sampleName}.filtered.mapped.bam -U ${sampleName}.bad.mapped.bam -e '!flag.munmap && (tlen > 300 || tlen < -300)' -F 2048 ${sampleName}.mapped.bam
- 
-        samtools index ${sampleName}.filtered.mapped.bam
-
-        ${ivarCmd} -i ${sampleName}.filtered.mapped.bam -b ${bedfile} -m ${params.illuminaKeepLen} -q ${params.illuminaQualThreshold} -p ivar.out
-
-        samtools reheader --no-PG  -c 'sed "s/${sampleName}/sample/g"' ivar.out.bam | \
-        samtools sort -o sample.mapped.primertrimmed.sorted.bam
-
-        mv sample.mapped.primertrimmed.sorted.bam ${sampleName}.mapped.primertrimmed.sorted.bam
-        """
-
+           """
+           samtools reheader --no-PG  -c 'sed "s/${sampleName}/sample/g"' ${bam} | \
+           samtools view -F4 -o sample.mapped.bam
+           mv sample.mapped.bam ${sampleName}.mapped.bam
+           ${samtoolsIvarCmd}
+           samtools reheader --no-PG  -c 'sed "s/${sampleName}/sample/g"' ivar.out.bam | \
+           samtools sort -o sample.mapped.primertrimmed.sorted.bam
+           mv sample.mapped.primertrimmed.sorted.bam ${sampleName}.mapped.primertrimmed.sorted.bam
+           """
+  
     else
-        """
-        samtools view -F4 -o ${sampleName}.mapped.bam ${bam}
-        samtools view -o ${sampleName}.filtered.mapped.bam -U ${sampleName}.bad.mapped.bam -e '!flag.munmap && (tlen > 300 || tlen < -300)' -F 2048 ${sampleName}.mapped.bam
-        samtools index ${sampleName}.filtered.mapped.bam
-        ${ivarCmd} -i ${sampleName}.filtered.mapped.bam -b ${bedfile} -m ${params.illuminaKeepLen} -q ${params.illuminaQualThreshold} -p ivar.out
-        samtools sort -o ${sampleName}.mapped.primertrimmed.sorted.bam ivar.out.bam
-        """
+        
+           """
+           samtools view -F4 -o ${sampleName}.mapped.bam ${bam}
+           ${samtoolsIvarCmd}
+           samtools sort -o ${sampleName}.mapped.primertrimmed.sorted.bam ivar.out.bam
+           """
+ 
 }
 
 process callVariants {
