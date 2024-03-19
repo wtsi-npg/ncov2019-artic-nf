@@ -77,6 +77,8 @@ Important config options are:
 |mpileupDepth | Mpileup depth for ivar|
 |ivarFreqThreshold | ivar frequency threshold for variant|
 |ivarMinDepth | Minimum coverage depth to call variant|
+|ivarAlternativeMinDepth | Alternative depth for consensus calling|
+|tlenFilter | A boolean option to enable tlen filtering|
 
 #### QC
 A script to do some basic COG-UK QC is provided in `bin/qc.py`. This currently tests if >50% of reference bases are covered by >10 reads (Illumina) or >20 reads (Nanopore), OR if there is a stretch of more than 10 Kb of sequence without N - setting qc_pass in `<outdir>/<prefix>.qc.csv` to TRUE. `bin/qc.py` can be extended to incorporate any QC test, as long as the script outputs a csv file a "qc_pass" last column, with samples TRUE or FALSE.
