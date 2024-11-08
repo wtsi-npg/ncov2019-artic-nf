@@ -1,9 +1,7 @@
 name: artic-ncov2019-illumina
 channels:
-  - https://dnap.cog.sanger.ac.uk/npg/conda/prod/generic
   - conda-forge
   - bioconda
-  - defaults
 dependencies:
   - python=3
   - biopython=1.74
